@@ -1,0 +1,61 @@
+services:
+  orders:
+    build:
+      context: .
+      dockerfile: ./apps/orders/Dockerfile
+      target: development
+    command: npm run start:dev orders
+    env_file:
+      - ./apps/orders/.env
+    depends_on:
+      - mariadb
+      - books
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - '5001:5001'
+  books:
+    build:
+      context: .
+      dockerfile: ./apps/books/Dockerfile
+      target: development
+    command: npm run start:dev books
+    env_file:
+      - ./apps/books/.env
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - '5432:5432'
+    environment:
+        POSTGRES_PASSWORD: password
+        POSTGRES_USER: postgres
+        POSTGRES_DB: gpt
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+
+  mariadb:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: gpt
+      MYSQL_PASSWORD: password
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql-data:/var/lib/mysql
